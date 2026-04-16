@@ -22,6 +22,11 @@ export async function POST(req: NextRequest) {
 
     const templatePath = path.join(process.cwd(), "public", "templates", template.filePath);
     
+    console.log("--- DEBUG: Generation Start ---");
+    console.log("Template ID:", templateId);
+    console.log("Expected Fields (from DB):", template.fields);
+    console.log("Received Data (from UI):", JSON.stringify(data, null, 2));
+
     // 1. Fill DOCX
     const filledDocxBuffer = fillTemplate(templatePath, data);
 
@@ -37,10 +42,11 @@ export async function POST(req: NextRequest) {
     });
 
     // 4. Return PDF as response
+    const encodedFilename = encodeURIComponent(`${template.name}_filled.pdf`);
     return new NextResponse(pdfBuffer, {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${template.name}_filled.pdf"`,
+        "Content-Disposition": `attachment; filename*=UTF-8''${encodedFilename}`,
       },
     });
   } catch (error: unknown) {
