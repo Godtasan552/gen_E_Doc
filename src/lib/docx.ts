@@ -38,7 +38,7 @@ export function extractTags(filePath: string): string[] {
  * Fills a .docx template with the provided data.
  * Returns a Buffer of the filled document.
  */
-export function fillTemplate(templatePath: string, data: Record<string, any>): Buffer {
+export function fillTemplate(templatePath: string, data: Record<string, unknown>): Buffer {
   const content = fs.readFileSync(templatePath, "binary");
   const zip = new PizZip(content);
   const doc = new Docxtemplater(zip, {

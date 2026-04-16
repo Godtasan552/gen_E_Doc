@@ -6,9 +6,16 @@ import { useRouter } from "next/navigation";
 import { FileDown, ChevronLeft, Loader2, Printer } from "lucide-react";
 import Swal from "sweetalert2";
 
+interface DocumentTemplate {
+  id: string;
+  name: string;
+  fields: string;
+  filePath: string;
+}
+
 export default function FillPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [template, setTemplate] = useState<any>(null);
+  const [template, setTemplate] = useState<DocumentTemplate | null>(null);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [fields, setFields] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -43,6 +50,8 @@ export default function FillPage({ params }: { params: Promise<{ id: string }> }
   };
 
   const handleExport = async () => {
+    if (!template) return;
+
     setIsGenerating(true);
     try {
       const response = await axios.post(
@@ -61,7 +70,7 @@ export default function FillPage({ params }: { params: Promise<{ id: string }> }
       link.remove();
 
       Swal.fire("สำเร็จ!", "ดาวน์โหลดไฟล์ PDF เรียบร้อยแล้ว", "success");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       Swal.fire("ล้มเหลว", "ไม่สามารถสร้างไฟล์ PDF ได้ ตรวจสอบว่าได้ติดตั้ง LibreOffice แล้ว", "error");
     } finally {
@@ -89,13 +98,13 @@ export default function FillPage({ params }: { params: Promise<{ id: string }> }
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         {/* Left: Form */}
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">กรอกข้อมูลสำหรับ {template.name}</h1>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">กรอกข้อมูลสำหรับ {template?.name}</h1>
           <p className="text-slate-500 mb-8">ข้อมูลที่กรอกจะถูกนำไปวางแทนที่ตัวแปรในเอกสาร</p>
 
           <div className="card">
             {fields.length === 0 ? (
               <p className="text-amber-600 bg-amber-50 p-4 rounded-lg">
-                ไม่พบตัวแปรในไฟล์ Word นี้ กรุณาใช้รูปแบบ `{"{tag}"}` ในเอกสาร
+                ไม่พบตัวแปรในไฟล์ Word นี้ กรุณาใช้รูปแบบ &quot;{`{tag}`}&quot; ในเอกสาร
               </p>
             ) : (
               <div className="space-y-2">
@@ -151,7 +160,7 @@ export default function FillPage({ params }: { params: Promise<{ id: string }> }
                  </li>
                  <li className="flex gap-3">
                     <span className="bg-indigo-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 mt-1">2</span>
-                    <span>กดปุ่ม "สร้างไฟล์ PDF" ระบบจะใช้ **LibreOffice** ในการ Render เอกสาร</span>
+                    <span>กดปุ่ม &quot;สร้างไฟล์ PDF&quot; ระบบจะใช้ **LibreOffice** ในการ Render เอกสาร</span>
                  </li>
                  <li className="flex gap-3">
                     <span className="bg-indigo-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 mt-1">3</span>
@@ -161,7 +170,7 @@ export default function FillPage({ params }: { params: Promise<{ id: string }> }
               
               <div className="mt-10 p-4 bg-white rounded-lg border border-slate-200">
                  <p className="text-xs text-slate-400 mb-1 uppercase font-bold tracking-wider">Template Path</p>
-                 <p className="text-xs font-mono text-slate-600 truncate">{template.filePath}</p>
+                 <p className="text-xs font-mono text-slate-600 truncate">{template?.filePath}</p>
               </div>
            </div>
         </div>

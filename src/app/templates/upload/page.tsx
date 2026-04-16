@@ -36,8 +36,9 @@ export default function UploadPage() {
         confirmButtonColor: "#4f46e5",
       });
       router.push(`/templates/fill/${res.data.id}`);
-    } catch (err: any) {
-      Swal.fire("อัปโหลดไม่สำเร็จ", err.response?.data?.error || "เกิดข้อผิดพลาด", "error");
+    } catch (err: unknown) {
+      const errorMessage = axios.isAxiosError(err) ? err.response?.data?.error : "เกิดข้อผิดพลาด";
+      Swal.fire("อัปโหลดไม่สำเร็จ", errorMessage || "เกิดข้อผิดพลาด", "error");
     } finally {
       setIsUploading(false);
     }
