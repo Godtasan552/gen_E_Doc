@@ -3,8 +3,9 @@
 import { useEffect, useState, use } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { FileDown, ChevronLeft, Loader2, Printer } from "lucide-react";
+import { FileDown, ChevronLeft, Loader2, Printer, CheckCircle, HelpCircle } from "lucide-react";
 import Swal from "sweetalert2";
+import Link from "next/link";
 
 interface DocumentTemplate {
   id: string;
@@ -22,7 +23,6 @@ export default function FillPage({ params }: { params: Promise<{ id: string }> }
   const router = useRouter();
 
   useEffect(() => {
-    // Fetch template details to get fields
     const fetchTemplate = async () => {
       try {
         const res = await axios.get(`/api/templates/${id}`);
@@ -30,7 +30,6 @@ export default function FillPage({ params }: { params: Promise<{ id: string }> }
         const parsedFields = JSON.parse(res.data.fields);
         setFields(parsedFields);
         
-        // Initialize form data
         const initialData: Record<string, string> = {};
         parsedFields.forEach((field: string) => {
           initialData[field] = "";
@@ -51,7 +50,6 @@ export default function FillPage({ params }: { params: Promise<{ id: string }> }
 
   const handleExport = async () => {
     if (!template) return;
-
     setIsGenerating(true);
     try {
       const response = await axios.post(
@@ -60,7 +58,6 @@ export default function FillPage({ params }: { params: Promise<{ id: string }> }
         { responseType: "blob" }
       );
 
-      // Create download link
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -80,99 +77,124 @@ export default function FillPage({ params }: { params: Promise<{ id: string }> }
 
   if (!template) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="animate-spin text-indigo-600 w-12 h-12" />
+      <div className="flex flex-col h-screen items-center justify-center bg-slate-50 gap-4">
+        <Loader2 className="animate-spin text-indigo-600" size={48} />
+        <p className="text-slate-500 font-medium">กำลังเตรียมแบบฟอร์มของคุณ...</p>
       </div>
     );
   }
 
   return (
-    <div className="container animate-fade-in pb-20">
-      <button 
-        onClick={() => router.push("/templates/upload")}
-        className="btn btn-outline mb-8 text-sm"
-      >
-        <ChevronLeft className="w-4 h-4" /> ย้อนกลับ
-      </button>
+    <div className="bg-slate-50 min-h-screen pb-20">
+      <div className="container fade-in">
+        <header className="flex justify-between items-center py-8 mb-8 border-b border-slate-200">
+          <Link href="/templates/upload" className="btn btn-outline text-sm">
+            <ChevronLeft size={18} /> เลือกไฟล์ใหม่
+          </Link>
+          <div className="text-right">
+             <h2 className="font-bold text-slate-900 uppercase tracking-wider text-sm">{template.name}</h2>
+             <p className="text-xs text-slate-400">Step 2 of 2: Fill & Export</p>
+          </div>
+        </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        {/* Left: Form */}
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">กรอกข้อมูลสำหรับ {template?.name}</h1>
-          <p className="text-slate-500 mb-8">ข้อมูลที่กรอกจะถูกนำไปวางแทนที่ตัวแปรในเอกสาร</p>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          {/* Left: Input Form */}
+          <div className="lg:col-span-8">
+            <div className="mb-8">
+               <h1 className="text-3xl font-extrabold text-slate-900 mb-2">กรอกข้อมูลลงแบบฟอร์ม</h1>
+               <p className="text-slate-500">ใส่ข้อมูลลงในช่องว่างด้านล่าง ระบบจะไปเติมลงในเอกสาร Word ของคุณโดยอัตโนมัติ</p>
+            </div>
 
-          <div className="card">
-            {fields.length === 0 ? (
-              <p className="text-amber-600 bg-amber-50 p-4 rounded-lg">
-                ไม่พบตัวแปรในไฟล์ Word นี้ กรุณาใช้รูปแบบ &quot;{`{tag}`}&quot; ในเอกสาร
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {fields.map((field) => (
-                    <div key={field}>
-                        <label className="block text-sm font-medium text-slate-700 capitalize">
-                            {field.replace(/_/g, " ")}
-                        </label>
-                        <input
-                            type="text"
-                            value={formData[field]}
-                            onChange={(e) => handleInputChange(field, e.target.value)}
-                            className="input-field"
-                            placeholder={`ระบุ ${field}...`}
-                        />
-                    </div>
-                ))}
+            <div className="card shadow-md border-none">
+              {fields.length === 0 ? (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-8 text-center text-amber-800">
+                  <HelpCircle size={48} className="mx-auto mb-4 opacity-40" />
+                  <p className="font-bold mb-1">ไม่พบตัวแปรในเอกสาร</p>
+                  <p className="text-sm opacity-80">กรุณากลับไปเช็คตัวแปรใน Word ให้ใช้รูปแบบ &quot;{`{tag}`}&quot; เช่น &quot;{`{name}`}&quot;</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                  {fields.map((field) => (
+                      <div key={field} className="form-group">
+                          <label className="label capitalize flex items-center gap-2">
+                              {field.replace(/_/g, " ")}
+                              {formData[field] && <CheckCircle size={14} className="text-emerald-500" />}
+                          </label>
+                          <input
+                              type="text"
+                              value={formData[field]}
+                              onChange={(e) => handleInputChange(field, e.target.value)}
+                              className="input"
+                              placeholder={`ระบุข้อมูลสำหรับ ${field}...`}
+                          />
+                      </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-8 pt-8 border-t border-slate-100 flex items-center justify-between">
+                 <div className="text-slate-400 text-sm">
+                    {fields.length} placeholders detected in template
+                 </div>
+                 <button
+                    onClick={handleExport}
+                    disabled={isGenerating || fields.length === 0}
+                    className="btn btn-primary px-10 py-4 shadow-lg shadow-indigo-100"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="animate-spin" size={20} />
+                        กำลังเรนเดอร์ PDF...
+                      </>
+                    ) : (
+                      <>
+                        <Printer size={20} />
+                        สร้างเอกสาร PDF
+                      </>
+                    )}
+                  </button>
               </div>
-            )}
-
-            <div className="mt-8">
-              <button
-                onClick={handleExport}
-                disabled={isGenerating || fields.length === 0}
-                className="btn btn-primary w-full py-4 text-lg"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="animate-spin w-5 h-5" />
-                    กำลังประมวลผล PDF (LibreOffice)...
-                  </>
-                ) : (
-                  <>
-                    <Printer className="w-5 h-5" />
-                    สร้างไฟล์ PDF และดาวน์โหลด
-                  </>
-                )}
-              </button>
             </div>
           </div>
-        </div>
 
-        {/* Right: Preview Info */}
-        <div className="hidden lg:block">
-           <div className="card bg-slate-50 border-dashed sticky top-8">
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                 <FileDown className="text-indigo-600" /> คำแนะนำการใช้งาน
-              </h2>
-              <ul className="space-y-4 text-slate-600">
-                 <li className="flex gap-3">
-                    <span className="bg-indigo-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 mt-1">1</span>
-                    <span>กรอกข้อมูลในช่องว่างตามตัวแปรที่ระบบสแกนพบ</span>
-                 </li>
-                 <li className="flex gap-3">
-                    <span className="bg-indigo-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 mt-1">2</span>
-                    <span>กดปุ่ม &quot;สร้างไฟล์ PDF&quot; ระบบจะใช้ **LibreOffice** ในการ Render เอกสาร</span>
-                 </li>
-                 <li className="flex gap-3">
-                    <span className="bg-indigo-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 mt-1">3</span>
-                    <span>ตรวจสอบข้อมูลในไฟล์ PDF ที่โหลดมา หากต้องการแก้ไข สามารถแก้ที่ฟอร์มแล้วกดสร้างใหม่ได้ทันที</span>
-                 </li>
-              </ul>
-              
-              <div className="mt-10 p-4 bg-white rounded-lg border border-slate-200">
-                 <p className="text-xs text-slate-400 mb-1 uppercase font-bold tracking-wider">Template Path</p>
-                 <p className="text-xs font-mono text-slate-600 truncate">{template?.filePath}</p>
-              </div>
-           </div>
+          {/* Right: Sidebar Helper */}
+          <div className="lg:col-span-4">
+             <div className="sticky top-28 space-y-6">
+                <div className="card border-none bg-indigo-600 text-white shadow-xl">
+                   <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                      <FileDown size={22} /> วิธีการใช้งาน
+                   </h2>
+                   <div className="space-y-4 opacity-90 text-sm">
+                      <div className="flex gap-3">
+                         <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0">1</div>
+                         <p>กรอกข้อมูลลงในช่องที่มีตัวแปรจากไฟล์ต้นฉบับ</p>
+                      </div>
+                      <div className="flex gap-3">
+                         <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0">2</div>
+                         <p>ตรวจสอบความถูกต้องของชื่อและวันที่</p>
+                      </div>
+                      <div className="flex gap-3">
+                         <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0">3</div>
+                         <p>กดปุ่ม <strong>&quot;สร้างเอกสาร PDF&quot;</strong> เพื่อรับไฟล์</p>
+                      </div>
+                   </div>
+                </div>
+
+                <div className="card border-slate-200 bg-white shadow-sm p-6">
+                   <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Template Info</h3>
+                   <div className="space-y-4">
+                      <div>
+                         <p className="text-xs text-slate-400 mb-1">Internal Reference</p>
+                         <p className="text-sm text-slate-700 font-mono truncate">{id}</p>
+                      </div>
+                      <div>
+                         <p className="text-xs text-slate-400 mb-1">Source File</p>
+                         <p className="text-sm text-slate-700 font-medium truncate">{template?.filePath}</p>
+                      </div>
+                   </div>
+                </div>
+             </div>
+          </div>
         </div>
       </div>
     </div>

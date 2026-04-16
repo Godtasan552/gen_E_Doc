@@ -3,8 +3,9 @@
 import { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { Upload, FileText, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Upload, FileText, CheckCircle2, ChevronLeft, Loader2, Info } from "lucide-react";
 import Swal from "sweetalert2";
+import Link from "next/link";
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -45,71 +46,96 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="container animate-fade-in">
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-bold text-slate-900 mb-2">อัปโหลดแม่แบบเอกสาร</h1>
-        <p className="text-slate-500">เลือกไฟล์ .docx เพื่อสร้างแบบฟอร์มกรอกข้อมูลอัตโนมัติ</p>
-      </div>
+    <div className="bg-slate-50 min-h-screen pb-20">
+      <div className="container fade-in">
+        <header className="flex justify-between items-center py-8 mb-8">
+          <Link href="/" className="btn btn-outline text-sm">
+            <ChevronLeft size={18} /> ย้อนกลับ
+          </Link>
+          <div className="text-right">
+             <h2 className="font-bold text-slate-900">อัปโหลดแม่แบบ</h2>
+             <p className="text-xs text-slate-400">Step 1 of 2: Template Setup</p>
+          </div>
+        </header>
 
-      <div className="card max-w-2xl mx-auto">
-        <label className="drop-zone block">
-          <input type="file" className="hidden" accept=".docx" onChange={handleFileChange} />
-          <div className="flex flex-col items-center">
-            {file ? (
-              <>
-                <FileText className="w-16 h-16 text-indigo-500 mb-4" />
-                <p className="text-lg font-medium text-slate-700">{file.name}</p>
-                <p className="text-sm text-slate-400">{(file.size / 1024).toFixed(2)} KB</p>
-              </>
-            ) : (
-              <>
-                <Upload className="w-16 h-16 text-slate-300 mb-4" />
-                <p className="text-lg font-medium text-slate-700">คลิกหรือลากไฟล์มาวางที่นี่</p>
-                <p className="text-sm text-slate-400">รองรับไฟล์ Microsoft Word (.docx) เท่านั้น</p>
-              </>
-            )}
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-10">
+            <h1 className="text-4xl font-extrabold text-slate-900 mb-4">นำเข้าไฟล์ Word</h1>
+            <p className="text-slate-500">ระบบจะวิเคราะห์หาตัวแปรในรูปแบบ {`{ตัวแปร}`} เพื่อสร้างแบบฟอร์มให้อัตโนมัติ</p>
           </div>
-        </label>
 
-        <div className="mt-8 flex justify-center">
-          <button
-            onClick={handleUpload}
-            disabled={!file || isUploading}
-            className={`btn btn-primary px-8 ${(!file || isUploading) ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            {isUploading ? (
-              <>
-                <Loader2 className="animate-spin w-5 h-5" />
-                กำลังอัปโหลด...
-              </>
-            ) : (
-              "เริ่มวิเคราะห์ตัวแปร"
-            )}
-          </button>
-        </div>
-      </div>
+          <div className="card shadow-xl border-none p-10">
+            <label className="upload-zone group block mb-8">
+              <input type="file" className="hidden" accept=".docx" onChange={handleFileChange} />
+              <div className="flex flex-col items-center">
+                {file ? (
+                  <div className="animate-fade-in text-center">
+                    <div className="bg-indigo-100 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 text-indigo-600">
+                      <FileText size={40} />
+                    </div>
+                    <p className="text-xl font-bold text-indigo-600 mb-1">{file.name}</p>
+                    <p className="text-sm text-slate-400">ขนาดไฟล์: {(file.size / 1024).toFixed(2)} KB</p>
+                    <div className="mt-4 text-indigo-500 text-sm font-medium">คลิกเพื่อเปลี่ยนไฟล์</div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-slate-100 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-colors">
+                      <Upload size={40} />
+                    </div>
+                    <p className="text-xl font-bold text-slate-700 mb-1">ลากไฟล์มาวาง หรือ คลิกเพื่อเลือก</p>
+                    <p className="text-sm text-slate-400">รองรับเฉพาะไฟล์ .docx (Microsoft Word)</p>
+                  </>
+                )}
+              </div>
+            </label>
 
-      <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-        <div className="p-4">
-          <div className="bg-indigo-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 className="text-indigo-600 w-6 h-6" />
+            <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex gap-3 text-amber-800 text-sm mb-8">
+              <Info className="shrink-0" size={20} />
+              <p>
+                <strong>ทิป:</strong> โปรดตรวจสอบให้แน่ใจว่าในไฟล์ Word ของคุณมีการเขียนตัวแปรในรูปแบบ <code>{`{ตัวแปร}`}</code> 
+                เช่น <code>{`{student_name}`}</code> เพื่อให้ระบบสร้างแบบฟอร์มได้อย่างถูกต้อง
+              </p>
+            </div>
+
+            <button
+              onClick={handleUpload}
+              disabled={!file || isUploading}
+              className={`btn btn-primary w-full py-4 text-lg ${(!file || isUploading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="animate-spin" size={24} />
+                  กำลังประมวลผลแม่แบบเอกสาร...
+                </>
+              ) : (
+                <>เริ่มสร้างแบบฟอร์มดิจิทัล</>
+              )}
+            </button>
           </div>
-          <h3 className="font-semibold mb-2">ไม่ต้องเขียนโค้ด</h3>
-          <p className="text-sm text-slate-500">ระบบจะหาตัวแปร {`{ชื่อ}`} ใน Word ของคุณให้เอง</p>
-        </div>
-        <div className="p-4">
-          <div className="bg-indigo-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 className="text-indigo-600 w-6 h-6" />
+
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
+             <div className="flex flex-col items-center text-center">
+                <div className="bg-white shadow-sm border border-slate-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+                   <CheckCircle2 size={24} className="text-emerald-500" />
+                </div>
+                <h3 className="font-bold text-slate-800 mb-1">สแกนตัวแปร</h3>
+                <p className="text-xs text-slate-400">ดึงข้อมูลตัวแปรจากไฟล์อัตโนมัติ</p>
+             </div>
+             <div className="flex flex-col items-center text-center">
+                <div className="bg-white shadow-sm border border-slate-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+                   <CheckCircle2 size={24} className="text-emerald-500" />
+                </div>
+                <h3 className="font-bold text-slate-800 mb-1">สร้างฟอร์ม</h3>
+                <p className="text-xs text-slate-400">ได้หน้ากรอกข้อมูลที่สวยงามทันที</p>
+             </div>
+             <div className="flex flex-col items-center text-center">
+                <div className="bg-white shadow-sm border border-slate-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+                   <CheckCircle2 size={24} className="text-emerald-500" />
+                </div>
+                <h3 className="font-bold text-slate-800 mb-1">เป็น PDF</h3>
+                <p className="text-xs text-slate-400">ส่งออกไฟล์ PDF คุณภาพสูง</p>
+             </div>
           </div>
-          <h3 className="font-semibold mb-2">รักษาต้นฉบับ</h3>
-          <p className="text-sm text-slate-500">คงเลย์เอาต์เดิมไว้ 100% เมื่อ Export เป็น PDF</p>
-        </div>
-        <div className="p-4">
-          <div className="bg-indigo-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 className="text-indigo-600 w-6 h-6" />
-          </div>
-          <h3 className="font-semibold mb-2">ใช้งานง่าย</h3>
-          <p className="text-sm text-slate-500">กรอกฟอร์มแล้วได้ไฟล์ PDF ทันที</p>
         </div>
       </div>
     </div>
