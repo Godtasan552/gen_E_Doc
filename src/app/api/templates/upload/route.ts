@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { extractTags } from "@/lib/docx";
 import fs from "fs";
 import path from "path";
-import { v4 as uuidv4 } from "uuid";
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,28 +16,33 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Save to public/templates
+    // Ensure upload directory exists
+    const templateDir = path.join(process.cwd(), "public", "templates");
+    if (!fs.existsSync(templateDir)) {
+      fs.mkdirSync(templateDir, { recursive: true });
+    }
+
     const fileName = `${Date.now()}_${file.name}`;
-    const uploadPath = path.join(process.cwd(), "public", "templates", fileName);
+    const uploadPath = path.join(templateDir, fileName);
     
     fs.writeFileSync(uploadPath, buffer);
 
-    // Extract tags
-    const tags = extractTags(uploadPath);
+    // Extract tags with context (returns DocumentField[])
+    const fields = extractTags(uploadPath);
 
     // Save to database
     const template = await prisma.documentTemplate.create({
       data: {
         name: file.name.replace(".docx", ""),
         filePath: fileName,
-        fields: JSON.stringify(tags),
+        fields: JSON.stringify(fields), // Now stores the array of objects
       },
     });
 
     return NextResponse.json({ 
-        message: "Template uploaded successfully", 
+        message: "Template uploaded and analyzed successfully", 
         id: template.id,
-        fields: tags 
+        fields: fields 
     });
   } catch (error: unknown) {
     console.error("Upload Error:", error);

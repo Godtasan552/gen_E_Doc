@@ -1,5 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// This is your Prisma schema file
+// Based on project_blueprint.md requirements
+// URL is handled in prisma.config.ts (Prisma 7 convention)
 
 generator client {
   provider = "prisma-client"
@@ -10,21 +11,75 @@ datasource db {
   provider = "sqlite"
 }
 
+// 1. User Model
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      String   @default("STUDENT") // STUDENT, ADVISOR, ADMIN
+  studentId String?  
+  department String?
+  projects  ProjectMember[]
+  advisedProjects Project[] @relation("ProjectAdvisor")
+  notifications Notification[]
+  createdAt DateTime @default(now())
+}
+
+// 2. Project Tracking Model
+model Project {
+  id          String   @id @default(cuid())
+  nameTh      String
+  nameEn      String
+  description String?
+  status      String   @default("PENDING") 
+  members     ProjectMember[]
+  advisor     User?    @relation("ProjectAdvisor", fields: [advisorId], references: [id])
+  advisorId   String?
+  submissions Submission[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  project   Project  @relation(fields: [projectId], references: [id])
+  projectId String
+  role      String   @default("MEMBER") // LEADER, MEMBER
+}
+
+// 3. E-Document Template Model
 model DocumentTemplate {
   id          String   @id @default(cuid())
   name        String
-  filePath    String   // Path to the original .docx template
-  fields      String   // JSON string of detected fields
+  filePath    String   
+  fields      String   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   submissions Submission[]
 }
 
+// 4. Submission Model
 model Submission {
   id         String           @id @default(cuid())
   template   DocumentTemplate @relation(fields: [templateId], references: [id])
   templateId String
-  data       String           // JSON string of submitted values
-  pdfPath    String?          // Optional path to the generated PDF
+  project    Project?         @relation(fields: [projectId], references: [id])
+  projectId  String?
+  data       String           
+  pdfPath    String?          
+  status     String           @default("PENDING") 
   createdAt  DateTime         @default(now())
+}
+
+// 5. Notification Model
+model Notification {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  message   String
+  read      Boolean  @default(false)
+  type      String   @default("INFO")
+  createdAt DateTime @default(now())
 }
